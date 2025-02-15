@@ -9,7 +9,33 @@ import (
 )
 
 type C struct {
-	Sha string `json:"sha"`
+	Sha    string `json:"sha"`
+	Commit struct {
+		Author struct {
+			Name  string `json:"name"`
+			Email string `json:"email"`
+			Date  string `json:"date"`
+		} `json:"author"`
+		Committer struct {
+			Name  string `json:"name"`
+			Email string `json:"email"`
+			Date  string `json:"date"`
+		} `json:"committer"`
+		Message string `json:"message"`
+		Tree    struct {
+			Sha string `json:"sha"`
+			Url string `json:"url"`
+		} `json:"tree"`
+		Url           string `json:"url"`
+		Comment_count int64  `json:"comment_count"`
+		Verification  struct {
+			Verified    bool   `json:"verified"`
+			Reason      string `json:"reason"`
+			Signature   string `json:"signature"`
+			Payload     string `json:"payload"`
+			Verified_at string `json:"verified_at"`
+		} `json:"verification"`
+	} `json:"commit"`
 }
 
 func Doc(w http.ResponseWriter, r *http.Request) {
