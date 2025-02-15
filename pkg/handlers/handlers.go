@@ -9,6 +9,9 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
 	"github.com/gorilla/mux"
 
 	"github.com/xulinus/repogo/pkg/global"
@@ -52,9 +55,7 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 	doc := mux.Vars(r)["doc"]
 	url := global.GH_API_REPO_URL + global.REPO + "commits?path=" + doc
 
-	fmt.Println(url)
-
-	commitsJson, err := gurl(url)
+	commitsJson, err := getHttpBodyInBytes(url)
 	if err != nil {
 		log.Println(err)
 	}
@@ -102,7 +103,16 @@ func NonListFileServer(next http.Handler) http.Handler {
 	})
 }
 
-func gurl(url string) ([]byte, error) {
+func commitsJsonToStruct(j []byte) ([]C, error) {
+	var commits []C
+	err := json.Unmarshal(j, &commits)
+	if err != nil {
+		return nil, err
+	}
+	return commits, nil
+}
+
+func getHttpBodyInBytes(url string) ([]byte, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -121,11 +131,16 @@ func gurl(url string) ([]byte, error) {
 	return bodyBytes, nil
 }
 
-func commitsJsonToStruct(j []byte) ([]C, error) {
-	var commits []C
-	err := json.Unmarshal(j, &commits)
-	if err != nil {
-		return nil, err
-	}
-	return commits, nil
+func mdToHTML(md []byte) []byte {
+	// create markdown parser with extensions
+	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
+	p := parser.NewWithExtensions(extensions)
+	doc := p.Parse(md)
+
+	// create HTML renderer with extensions
+	htmlFlags := html.CommonFlags | html.HrefTargetBlank
+	opts := html.RendererOptions{Flags: htmlFlags}
+	renderer := html.NewRenderer(opts)
+
+	return markdown.Render(doc, renderer)
 }
