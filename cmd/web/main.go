@@ -13,7 +13,10 @@ import (
 var port = "8085"
 
 func main() {
+	global.BRANCH = "main"
 	global.REPO = "xulinus/policy-docs/"
+	global.GH_API_REPO_URL = "https://api.github.com/repos/" + global.REPO + "commits?path="
+	global.GH_RAW_URL = "https://raw.githubusercontent.com/" + global.REPO + "refs/heads/" + global.BRANCH + "/"
 
 	router := mux.NewRouter().StrictSlash(true)
 
