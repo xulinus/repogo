@@ -60,7 +60,7 @@ type C struct {
 }
 
 type Changelog struct {
-	Date, Revision, Whom, Change string
+	Date, Revision, Whom, Change, FullSha string
 }
 
 type Revisionlog struct {
@@ -126,10 +126,12 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 		Changelog   []Changelog
 		Revisionlog Revisionlog
 		Document    string
+		Filename    string
 	}{
 		Changelog:   changelog,
 		Revisionlog: revisionlog,
 		Document:    string(mdToHTML(md)),
+		Filename:    doc,
 	})
 }
 
@@ -176,6 +178,7 @@ func changelogFromCommits(commits []C) []Changelog {
 			Revision: revision,
 			Whom:     whom,
 			Change:   message,
+			FullSha:  v.Sha,
 		})
 	}
 

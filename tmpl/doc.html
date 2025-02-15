@@ -9,6 +9,8 @@
   </head>
   <body>
 
+    {{.Filename}}
+
     {{if .Changelog}}
     <div class="changelog">
       <div class="row header">
@@ -20,7 +22,7 @@
      {{range .Changelog}}
       <div class="row">
         <div>{{.Date}}</div>
-        <div>{{.Revision}}</div>
+        <div><a href="/doc/{{$.Filename}}/{{.FullSha}}">{{.Revision}}</a></div>
         <div>{{.Whom}}</div>
         <div>{{.Change}}</div>
       </div>
