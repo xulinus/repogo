@@ -1,0 +1,19 @@
+.changelog {
+  display: flex;
+  flex-direction: column;
+  width: 900px;
+  background: wheat;
+}
+
+.changelog div {
+  padding-right: 10px;
+}
+
+.changelog .row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.changelog .header {
+  font-weight: 800;
+}
