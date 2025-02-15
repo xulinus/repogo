@@ -64,7 +64,7 @@ type Changelog struct {
 }
 
 type Revisionlog struct {
-	Additions, Deletions, Changes, Patch string
+	Additions, Deletions, Changes, Message, Patch string
 }
 
 func Doc(w http.ResponseWriter, r *http.Request) {
@@ -159,8 +159,7 @@ func GhApiJsonToStructMap(j []byte) (C, error) {
 	var c C
 	err := json.Unmarshal(j, &c)
 	if err != nil {
-		var emptyC C
-		return emptyC, err
+		return C{}, err
 	}
 	return c, nil
 }
@@ -220,6 +219,8 @@ func mdToHTML(md []byte) []byte {
 
 func revisionlogFromRevisionData(data C, doc string) Revisionlog {
 	var revisionlog Revisionlog
+
+	revisionlog.Message = data.Commit.Message
 
 	for _, f := range data.Files {
 		if f.Filename == doc {

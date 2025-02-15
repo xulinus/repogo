@@ -9,8 +9,6 @@
   </head>
   <body>
 
-    {{.Filename}}
-
     {{if .Changelog}}
     <div class="changelog">
       <div class="row header">
@@ -32,6 +30,7 @@
 
     {{if .Revisionlog}}
     <div class="revisionlog">
+      <pre>{{.Revisionlog.Message}}</pre>
       <pre>{{.Revisionlog.Patch}}</pre>  
     </div>
     {{end}}
