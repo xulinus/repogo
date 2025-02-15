@@ -1,8 +1,8 @@
 package global
 
 var (
-	GH_API_REPO_URL string
-	GH_RAW_URL      string
+	GH_API_REPO_URL = "https://api.github.com/repos/"
+	GH_RAW_URL      = "https://raw.githubusercontent.com/"
 	REPO            string
 	BRANCH          string
 )

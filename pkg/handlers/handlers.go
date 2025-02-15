@@ -45,26 +45,125 @@ type C struct {
 			Verified_at string `json:"verified_at"`
 		} `json:"verification"`
 	} `json:"commit"`
+	Files []struct {
+		Sha         string `json:"sha"`
+		Filename    string `json:"filename"`
+		Status      string `json:"status"`
+		Additions   int64  `json:"additions"`
+		Deletions   int64  `json:"deletions"`
+		Changes     int64  `json:"changes"`
+		Blob_url    string `json:"blob_url"`
+		Raw_url     string `json:"raw_url"`
+		Content_url string `json:"content_url"`
+		Patch       string `json:"patch"`
+	} `json:"files"`
 }
 
 type Changelog struct {
 	Date, Revision, Whom, Change string
 }
 
+type Revisionlog struct {
+	Additions, Deletions, Changes, Patch string
+}
+
 func Doc(w http.ResponseWriter, r *http.Request) {
 	doc := mux.Vars(r)["doc"]
-	commitsUrl := global.GH_API_REPO_URL + doc
+	sha := mux.Vars(r)["sha"]
 
-	commitsJson, err := getHttpBodyInBytes(commitsUrl)
+	var mdUrl string
+	var changelog []Changelog
+	var revisionlog Revisionlog
+
+	// if no sha is provided, we serve the lastes version of the document
+	if sha == "" {
+		mdUrl = global.GH_RAW_URL + global.REPO + "refs/heads/" + global.BRANCH + "/" + doc
+		commitsUrl := global.GH_API_REPO_URL + global.REPO + "commits?path=" + doc
+
+		commitsJson, err := getHttpBodyInBytes(commitsUrl)
+		if err != nil {
+			log.Println(err)
+		}
+
+		commits, err := GhApiJsonToStruct(commitsJson)
+		if err != nil {
+			log.Println(err)
+		}
+
+		changelog = changelogFromCommits(commits)
+
+		// if sha is provided, we show information for the document at that version
+	} else {
+		mdUrl = global.GH_RAW_URL + global.REPO + sha + "/" + doc
+		previousCommitUrl := global.GH_API_REPO_URL + global.REPO + "commits/" + sha
+
+		previousCommitJson, err := getHttpBodyInBytes(previousCommitUrl)
+		if err != nil {
+			log.Println(err)
+		}
+
+		revisionData, err := GhApiJsonToStructMap(previousCommitJson)
+		if err != nil {
+			log.Println(err)
+		}
+
+		revisionlog = revisionlogFromRevisionData(revisionData, doc)
+
+	}
+
+	// we always want to print the document itself
+	md, err := getHttpBodyInBytes(mdUrl)
 	if err != nil {
 		log.Println(err)
 	}
 
-	commits, err := commitsJsonToStruct(commitsJson)
+	dom, err := template.ParseFiles("tmpl/doc.html")
 	if err != nil {
-		log.Println(err)
+		print(err)
 	}
 
+	err = dom.Execute(w, struct {
+		Changelog   []Changelog
+		Revisionlog Revisionlog
+		Document    string
+	}{
+		Changelog:   changelog,
+		Revisionlog: revisionlog,
+		Document:    string(mdToHTML(md)),
+	})
+}
+
+func NonListFileServer(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/") {
+			http.NotFound(w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func GhApiJsonToStruct(j []byte) ([]C, error) {
+	var commits []C
+	err := json.Unmarshal(j, &commits)
+	if err != nil {
+		return nil, err
+	}
+	return commits, nil
+}
+
+func GhApiJsonToStructMap(j []byte) (C, error) {
+	var c C
+	err := json.Unmarshal(j, &c)
+	if err != nil {
+		var emptyC C
+		return emptyC, err
+	}
+	return c, nil
+}
+
+func changelogFromCommits(commits []C) []Changelog {
 	var changelog []Changelog
 	for _, v := range commits {
 
@@ -80,44 +179,7 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	mdUrl := global.GH_RAW_URL + doc
-	md, err := getHttpBodyInBytes(mdUrl)
-	if err != nil {
-		log.Println(err)
-	}
-
-	dom, err := template.ParseFiles("tmpl/doc.html")
-	if err != nil {
-		print(err)
-	}
-
-	err = dom.Execute(w, struct {
-		Changelog []Changelog
-		Document  string
-	}{
-		Changelog: changelog,
-		Document:  string(mdToHTML(md)),
-	})
-}
-
-func NonListFileServer(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/") {
-			http.NotFound(w, r)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func commitsJsonToStruct(j []byte) ([]C, error) {
-	var commits []C
-	err := json.Unmarshal(j, &commits)
-	if err != nil {
-		return nil, err
-	}
-	return commits, nil
+	return changelog
 }
 
 func getHttpBodyInBytes(url string) ([]byte, error) {
@@ -151,4 +213,19 @@ func mdToHTML(md []byte) []byte {
 	renderer := html.NewRenderer(opts)
 
 	return markdown.Render(doc, renderer)
+}
+
+func revisionlogFromRevisionData(data C, doc string) Revisionlog {
+	var revisionlog Revisionlog
+
+	for _, f := range data.Files {
+		if f.Filename == doc {
+			revisionlog.Additions = string(f.Additions)
+			revisionlog.Deletions = string(f.Deletions)
+			revisionlog.Changes = string(f.Changes)
+			revisionlog.Patch = f.Patch
+		}
+	}
+
+	return revisionlog
 }

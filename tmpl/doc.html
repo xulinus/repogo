@@ -9,6 +9,7 @@
   </head>
   <body>
 
+    {{if .Changelog}}
     <div class="changelog">
       <div class="row header">
         <div>Date</div>
@@ -25,6 +26,13 @@
       </div>
       {{end}}
     </div>
+    {{end}}
+
+    {{if .Revisionlog}}
+    <div class="revisionlog">
+      <pre>{{.Revisionlog.Patch}}</pre>  
+    </div>
+    {{end}}
 
     <div>
       {{.Document}}  

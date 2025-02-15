@@ -15,8 +15,6 @@ var port = "8085"
 func main() {
 	global.BRANCH = "main"
 	global.REPO = "xulinus/policy-docs/"
-	global.GH_API_REPO_URL = "https://api.github.com/repos/" + global.REPO + "commits?path="
-	global.GH_RAW_URL = "https://raw.githubusercontent.com/" + global.REPO + "refs/heads/" + global.BRANCH + "/"
 
 	router := mux.NewRouter().StrictSlash(true)
 
@@ -24,6 +22,7 @@ func main() {
 		Handler(http.StripPrefix("/css", handlers.NonListFileServer(http.FileServer(http.Dir("./tmpl/css/")))))
 
 	router.HandleFunc("/doc/{doc}", handlers.Doc)
+	router.HandleFunc("/doc/{doc}/{sha}", handlers.Doc)
 
 	log.Printf("Webserver listening on port %s", port)
 	http.ListenAndServe(":"+port, router)
