@@ -21,6 +21,7 @@ func main() {
 	router.PathPrefix("/css/").
 		Handler(http.StripPrefix("/css", handlers.NonListFileServer(http.FileServer(http.Dir("./tmpl/css/")))))
 
+	router.HandleFunc("/", handlers.Main)
 	router.HandleFunc("/doc/{sha:[a-f0-9]{40}}/{doc:.*}", handlers.Doc)
 	router.HandleFunc("/doc/{doc:.*}", handlers.Doc)
 
