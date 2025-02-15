@@ -13,7 +13,7 @@ import (
 var port = "8085"
 
 func main() {
-	global.REPO = "xulinus/policy-docs"
+	global.REPO = "xulinus/policy-docs/"
 
 	router := mux.NewRouter().StrictSlash(true)
 
