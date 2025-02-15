@@ -53,9 +53,9 @@ type Changelog struct {
 
 func Doc(w http.ResponseWriter, r *http.Request) {
 	doc := mux.Vars(r)["doc"]
-	url := global.GH_API_REPO_URL + global.REPO + "commits?path=" + doc
+	commitsUrl := global.GH_API_REPO_URL + doc
 
-	commitsJson, err := getHttpBodyInBytes(url)
+	commitsJson, err := getHttpBodyInBytes(commitsUrl)
 	if err != nil {
 		log.Println(err)
 	}
@@ -80,6 +80,12 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	mdUrl := global.GH_RAW_URL + doc
+	md, err := getHttpBodyInBytes(mdUrl)
+	if err != nil {
+		log.Println(err)
+	}
+
 	dom, err := template.ParseFiles("tmpl/doc.html")
 	if err != nil {
 		print(err)
@@ -87,8 +93,10 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 
 	err = dom.Execute(w, struct {
 		Changelog []Changelog
+		Document  string
 	}{
 		Changelog: changelog,
+		Document:  string(mdToHTML(md)),
 	})
 }
 

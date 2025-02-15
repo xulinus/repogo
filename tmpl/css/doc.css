@@ -17,3 +17,30 @@
 .changelog .header {
   font-weight: 800;
 }
+
+h1 {
+  font-size: 1.5em;
+  font-weight: 800;
+}
+
+h2 {
+  font-size: 1.25em;
+  font-weight: 800;
+}
+
+h3 {
+  font-size: 1em;
+  font-style: italic;
+  font-weight: 800;
+}
+
+code {
+  display: block;
+  background: lightgray;
+  font-family: 'Courier New', monospace;
+}
+
+table, td, th {
+  border: 1px solid black;
+}
+
