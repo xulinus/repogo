@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"text/template"
 )
 
@@ -38,6 +40,10 @@ type C struct {
 	} `json:"commit"`
 }
 
+type Changelog struct {
+	Date, Revision, Whom, Change string
+}
+
 func Doc(w http.ResponseWriter, r *http.Request) {
 	commitsJson, err := gurl(
 		"https://api.github.com/repos/xulinus/policy-docs/commits?path=testdoc.md",
@@ -51,15 +57,41 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
+	var changelog []Changelog
+	for _, v := range commits {
+
+		revision := v.Sha[:7]
+		whom := fmt.Sprintf("%s (%s)", v.Commit.Author.Name, v.Commit.Author.Email)
+		message := strings.Split(v.Commit.Message, "\n\n")
+
+		changelog = append(changelog, Changelog{
+			Date:     v.Commit.Author.Date,
+			Revision: revision,
+			Whom:     whom,
+			Change:   message[0],
+		})
+	}
+
 	dom, err := template.ParseFiles("tmpl/doc.html")
 	if err != nil {
 		print(err)
 	}
 
 	err = dom.Execute(w, struct {
-		Commits []C
+		Changelog []Changelog
 	}{
-		Commits: commits,
+		Changelog: changelog,
+	})
+}
+
+func NonListFileServer(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/") {
+			http.NotFound(w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	})
 }
 
