@@ -8,6 +8,10 @@ import (
 	"net/http"
 	"strings"
 	"text/template"
+
+	"github.com/gorilla/mux"
+
+	"github.com/xulinus/repogo/pkg/global"
 )
 
 type C struct {
@@ -45,9 +49,12 @@ type Changelog struct {
 }
 
 func Doc(w http.ResponseWriter, r *http.Request) {
-	commitsJson, err := gurl(
-		"https://api.github.com/repos/xulinus/policy-docs/commits?path=testdoc.md",
-	)
+	doc := mux.Vars(r)["doc"]
+	url := global.GH_API_REPO_URL + global.REPO + "commits?path=" + doc
+
+	fmt.Println(url)
+
+	commitsJson, err := gurl(url)
 	if err != nil {
 		log.Println(err)
 	}
@@ -62,13 +69,13 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 
 		revision := v.Sha[:7]
 		whom := fmt.Sprintf("%s (%s)", v.Commit.Author.Name, v.Commit.Author.Email)
-		message := strings.Split(v.Commit.Message, "\n\n")
+		message := strings.Split(v.Commit.Message, "\n\n")[0]
 
 		changelog = append(changelog, Changelog{
 			Date:     v.Commit.Author.Date,
 			Revision: revision,
 			Whom:     whom,
-			Change:   message[0],
+			Change:   message,
 		})
 	}
 
