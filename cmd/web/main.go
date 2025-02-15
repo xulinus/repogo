@@ -13,6 +13,10 @@ var port = "8085"
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
+
+	router.PathPrefix("/css/").
+		Handler(http.StripPrefix("/css", handlers.NonListFileServer(http.FileServer(http.Dir("./tmpl/css/")))))
+
 	router.HandleFunc("/doc", handlers.Doc)
 
 	log.Printf("Webserver listening on port %s", port)
