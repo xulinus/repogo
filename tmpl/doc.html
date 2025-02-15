@@ -4,9 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title></title>
-    <link href="css/style.css" rel="stylesheet">
+    <link href="css/reset.css" rel="stylesheet">
+    <link href="css/doc.css" rel="stylesheet">
   </head>
   <body>
-    {{.Commits}}
+    <div class="changelog">
+      <div class="row header">
+        <div>Date</div>
+        <div>Revision</div>
+        <div>By Whom</div>
+        <div>Changelog</div>
+      </div>
+     {{range .Changelog}}
+      <div class="row">
+        <div>{{.Date}}</div>
+        <div>{{.Revision}}</div>
+        <div>{{.Whom}}</div>
+        <div>{{.Change}}</div>
+      </div>
+      {{end}}
+    </div>
   </body>
 </html>
