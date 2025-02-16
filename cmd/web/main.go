@@ -15,6 +15,7 @@ var port = "8085"
 func main() {
 	global.BRANCH = "main"
 	global.REPO = "xulinus/policy-docs/"
+	global.FOLDER = ""
 
 	router := mux.NewRouter().StrictSlash(true)
 
