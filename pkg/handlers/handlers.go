@@ -59,8 +59,21 @@ type C struct {
 	} `json:"files"`
 }
 
+type File struct {
+	Name         string `json:"name"`
+	Path         string `json:"path"`
+	Sha          string `json:"sha"`
+	Size         int64  `json:"size"`
+	Download_url string `json:"download_url"`
+	Type         string `json:"type"`
+}
+
 type Changelog struct {
 	Date, Revision, Whom, Change, FullSha string
+}
+
+type Folder struct {
+	Path, Name, Text string
 }
 
 type Revisionlog struct {
@@ -85,7 +98,7 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 		}
 
-		commits, err := GhApiJsonToStruct(commitsJson)
+		commits, err := ghApiJsonToStruct(commitsJson)
 		if err != nil {
 			log.Println(err)
 		}
@@ -102,7 +115,7 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 		}
 
-		revisionData, err := GhApiJsonToStructMap(previousCommitJson)
+		revisionData, err := ghApiJsonToStructMap(previousCommitJson)
 		if err != nil {
 			log.Println(err)
 		}
@@ -136,7 +149,38 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 }
 
 func Main(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello World")
+	/*
+			    https://api.github.com/repos/xulinus/policy-docs/contents/
+
+			   jag vill använda: name, path och type
+
+		    sätt config options med json(index.json)!
+
+	*/
+
+	url := global.GH_API_REPO_URL + global.REPO + "contents/" + global.FOLDER
+	contentsJson, err := getHttpBodyInBytes(url)
+	if err != nil {
+		log.Println(err)
+	}
+
+	contents, err := ghContentsToFileSlice(contentsJson)
+	if err != nil {
+		log.Println(err)
+	}
+
+	fmt.Println(contents)
+
+	dom, err := template.ParseFiles("tmpl/index.html")
+	if err != nil {
+		print(err)
+	}
+
+	err = dom.Execute(w, struct {
+		Title string
+	}{
+		Title: "Repository",
+	})
 }
 
 func NonListFileServer(next http.Handler) http.Handler {
@@ -150,7 +194,7 @@ func NonListFileServer(next http.Handler) http.Handler {
 	})
 }
 
-func GhApiJsonToStruct(j []byte) ([]C, error) {
+func ghApiJsonToStruct(j []byte) ([]C, error) {
 	var commits []C
 	err := json.Unmarshal(j, &commits)
 	if err != nil {
@@ -159,13 +203,22 @@ func GhApiJsonToStruct(j []byte) ([]C, error) {
 	return commits, nil
 }
 
-func GhApiJsonToStructMap(j []byte) (C, error) {
+func ghApiJsonToStructMap(j []byte) (C, error) {
 	var c C
 	err := json.Unmarshal(j, &c)
 	if err != nil {
 		return C{}, err
 	}
 	return c, nil
+}
+
+func ghContentsToFileSlice(j []byte) ([]File, error) {
+	var files []File
+	err := json.Unmarshal(j, &files)
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
 }
 
 func changelogFromCommits(commits []C) []Changelog {
