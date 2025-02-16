@@ -9,12 +9,14 @@
   <body>
     <h1>{{.Title}}</h1>
 
-    {{range .Folders}}
-    <div>{{.Name}}</div>
-    <div>{{.Text}}</div>
+    {{range $key, $values := .Repository}}
+    <div>{{$key}}</div>
+      {{range $values}}
+      <div>
+        <a href="/doc/{{.Path}}">{{.Name}}</a>
+      </div>
+      {{end}}
     {{end}}
-
-
   
   </body>
 </html>

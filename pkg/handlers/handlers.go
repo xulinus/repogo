@@ -59,7 +59,7 @@ type C struct {
 	} `json:"files"`
 }
 
-type File struct {
+type GHFile struct {
 	Name         string `json:"name"`
 	Path         string `json:"path"`
 	Sha          string `json:"sha"`
@@ -72,8 +72,12 @@ type Changelog struct {
 	Date, Revision, Whom, Change, FullSha string
 }
 
+type File struct {
+	Name, Path, Displayname string
+}
+
 type Folder struct {
-	Path, Name, Text string
+	Name, Path, Displayname, Text string
 }
 
 type Revisionlog struct {
@@ -158,28 +162,19 @@ func Main(w http.ResponseWriter, r *http.Request) {
 
 	*/
 
-	url := global.GH_API_REPO_URL + global.REPO + "contents/" + global.FOLDER
-	contentsJson, err := getHttpBodyInBytes(url)
-	if err != nil {
-		log.Println(err)
-	}
-
-	contents, err := ghContentsToFileSlice(contentsJson)
-	if err != nil {
-		log.Println(err)
-	}
-
-	fmt.Println(contents)
+	repository, err := getRepositoryFileList()
 
 	dom, err := template.ParseFiles("tmpl/index.html")
 	if err != nil {
-		print(err)
+		log.Println(err)
 	}
 
 	err = dom.Execute(w, struct {
-		Title string
+		Title      string
+		Repository map[string][]File
 	}{
-		Title: "Repository",
+		Title:      "Repository",
+		Repository: repository,
 	})
 }
 
@@ -212,8 +207,8 @@ func ghApiJsonToStructMap(j []byte) (C, error) {
 	return c, nil
 }
 
-func ghContentsToFileSlice(j []byte) ([]File, error) {
-	var files []File
+func ghContentsToFileSlice(j []byte) ([]GHFile, error) {
+	var files []GHFile
 	err := json.Unmarshal(j, &files)
 	if err != nil {
 		return nil, err
@@ -258,6 +253,60 @@ func getHttpBodyInBytes(url string) ([]byte, error) {
 	}
 
 	return bodyBytes, nil
+}
+
+func getRepositoryFileList() (map[string][]File, error) {
+	url := global.GH_API_REPO_URL + global.REPO + "contents/" + global.FOLDER
+	contentsJson, err := getHttpBodyInBytes(url)
+	if err != nil {
+		log.Println(err)
+	}
+
+	folders, err := ghContentsToFileSlice(contentsJson)
+	if err != nil {
+		log.Println(err)
+	}
+
+	repositoryContents := make(map[string][]File)
+
+	for _, v := range folders {
+		if v.Type == "dir" {
+			name := string(v.Name)
+			repositoryContents[name], err = getFolderContent(name)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return repositoryContents, nil
+}
+
+func getFolderContent(folderName string) ([]File, error) {
+	/*	if global.FOLDER[len(global.FOLDER)-1] != "/" {
+		folderName = "/" + folderName
+	}*/
+
+	// TODO: We need to make sure that we have slashes everywhere where we need them
+
+	url := global.GH_API_REPO_URL + global.REPO + "contents/" + global.FOLDER + folderName
+
+	contentsJson, err := getHttpBodyInBytes(url)
+	if err != nil {
+		return nil, err
+	}
+
+	ghFiles, err := ghContentsToFileSlice(contentsJson)
+	if err != nil {
+		return nil, err
+	}
+
+	var files []File
+	for _, v := range ghFiles {
+		files = append(files, File{Name: v.Name, Path: v.Path})
+	}
+
+	return files, nil
 }
 
 func mdToHTML(md []byte) []byte {
