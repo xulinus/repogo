@@ -1,21 +1,60 @@
+body {
+  background: var(--background-colour);
+  color: var(--text-colour);
+  font-family: "Montserrat", sans-serif; /*var(--sans-serif);*/
+  font-size: 16px;
+  padding: 1em;
+}
+
+a {
+  color: var(--link-colour);
+}
+
+a:visited {
+  color: var(--link-visited-colour);
+}
+
+a:active {
+  color: var(--link-active-colour);
+}
+
+.changelog-heading {
+ font-weight: 400;
+}
+
 .changelog {
   display: flex;
   flex-direction: column;
-  width: 900px;
-  background: wheat;
-}
-
-.changelog div {
-  padding-right: 10px;
+  text-align: left;
+  width: 825px;
+  line-height: 1.25;
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
 
 .changelog .row {
   display: flex;
-  justify-content: space-between;
 }
 
 .changelog .header {
-  font-weight: 800;
+  font-weight: 600;
+  margin-bottom: .5em;
+}
+
+.changelog .date {
+  width: 100px;
+}
+
+.changelog .revision {
+  width: 100px;
+} 
+
+.changelog .whom {
+  width: 225px;
+}
+
+.changelog .change {
+  width: 400px;
 }
 
 h1 {

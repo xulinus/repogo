@@ -5,24 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title></title>
     <link href="/css/reset.css" rel="stylesheet">
+    <link href="/css/uchu.css" rel="stylesheet">
+    <link href="/css/fonts.css" rel="stylesheet">
+    <link href="/css/colours.css" rel="stylesheet">
     <link href="/css/doc.css" rel="stylesheet">
   </head>
   <body>
 
     {{if .Changelog}}
+    <h2 class="changelog-heading">Changelog</h2>
     <div class="changelog">
       <div class="row header">
-        <div>Date</div>
-        <div>Revision</div>
-        <div>By Whom</div>
-        <div>Changelog</div>
+        <div class="date">Date</div>
+        <div class="revision">Revision</div>
+        <div class="whom">By Whom</div>
+        <div class="change">Changelog</div>
       </div>
      {{range .Changelog}}
       <div class="row">
-        <div>{{.Date}}</div>
-        <div><a href="/doc/{{.FullSha}}/{{$.Filename}}">{{.Revision}}</a></div>
-        <div>{{.Whom}}</div>
-        <div>{{.Change}}</div>
+        <div class="date">{{.Date}}</div>
+        <div class="revision"><a href="/doc/{{.FullSha}}/{{$.Filename}}">{{.Revision}}</a></div>
+        <div class="whom">{{.Whom}}</div>
+        <div class="change">{{.Change}}</div>
       </div>
       {{end}}
     </div>
