@@ -6,4 +6,5 @@ var (
 	REPO            string
 	FOLDER          string
 	BRANCH          string
+	GH_BEARER_TOKEN string
 )
