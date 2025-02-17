@@ -98,7 +98,7 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 		mdUrl = global.GH_RAW_URL + global.REPO + "refs/heads/" + global.BRANCH + "/" + doc
 		commitsUrl := global.GH_API_REPO_URL + global.REPO + "commits?path=" + doc
 
-		commitsJson, err := getHttpBodyInBytes(commitsUrl)
+		commitsJson, err := ghApiAuthedReq(commitsUrl)
 		if err != nil {
 			log.Println(err)
 		}
@@ -115,7 +115,7 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 		mdUrl = global.GH_RAW_URL + global.REPO + sha + "/" + doc
 		previousCommitUrl := global.GH_API_REPO_URL + global.REPO + "commits/" + sha
 
-		previousCommitJson, err := getHttpBodyInBytes(previousCommitUrl)
+		previousCommitJson, err := ghApiAuthedReq(previousCommitUrl)
 		if err != nil {
 			log.Println(err)
 		}
@@ -273,9 +273,40 @@ func getHttpBodyInBytes(url string) ([]byte, error) {
 	return bodyBytes, nil
 }
 
+func ghApiAuthedReq(url string) ([]byte, error) {
+	client := http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header = http.Header{
+		"Content-Type":  {"application/json"},
+		"Authorization": {global.GH_BEARER_TOKEN},
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, err
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return bodyBytes, nil
+}
+
 func getRepositoryFileList() (map[string][]File, error) {
 	url := global.GH_API_REPO_URL + global.REPO + "contents/" + global.FOLDER
-	contentsJson, err := getHttpBodyInBytes(url)
+	contentsJson, err := ghApiAuthedReq(url)
 	if err != nil {
 		log.Println(err)
 	}
@@ -309,7 +340,7 @@ func getFolderContent(folderName string) ([]File, error) {
 
 	url := global.GH_API_REPO_URL + global.REPO + "contents/" + global.FOLDER + folderName
 
-	contentsJson, err := getHttpBodyInBytes(url)
+	contentsJson, err := ghApiAuthedReq(url)
 	if err != nil {
 		return nil, err
 	}
