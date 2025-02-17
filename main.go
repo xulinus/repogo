@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 
@@ -16,8 +17,12 @@ func main() {
 	global.BRANCH = "main"
 	global.REPO = "xulinus/policy-docs/"
 	global.FOLDER = ""
+	global.GH_BEARER_TOKEN = os.Getenv("GITHUB_BEARER_TOKEN")
 
 	router := mux.NewRouter().StrictSlash(true)
+
+	router.PathPrefix("/fonts/").
+		Handler(http.StripPrefix("/fonts", handlers.NonListFileServer(http.FileServer(http.Dir("./tmpl/fonts/")))))
 
 	router.PathPrefix("/css/").
 		Handler(http.StripPrefix("/css", handlers.NonListFileServer(http.FileServer(http.Dir("./tmpl/css/")))))
