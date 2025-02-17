@@ -11,7 +11,7 @@ import (
 	"github.com/xulinus/repogo/pkg/handlers"
 )
 
-var port = "8085"
+var port = os.Getenv("HTTP_PORT")
 
 func main() {
 	global.BRANCH = "main"
