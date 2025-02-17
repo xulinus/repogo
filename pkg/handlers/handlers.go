@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
@@ -221,11 +222,17 @@ func changelogFromCommits(commits []C) []Changelog {
 	for _, v := range commits {
 
 		revision := v.Sha[:7]
+
+		date, err := changelogTimeFormat(v.Commit.Author.Date)
+		if err != nil {
+			log.Println(err)
+			return nil
+		}
 		whom := fmt.Sprintf("%s (%s)", v.Commit.Author.Name, v.Commit.Author.Email)
 		message := strings.Split(v.Commit.Message, "\n\n")[0]
 
 		changelog = append(changelog, Changelog{
-			Date:     v.Commit.Author.Date,
+			Date:     date,
 			Revision: revision,
 			Whom:     whom,
 			Change:   message,
@@ -234,6 +241,17 @@ func changelogFromCommits(commits []C) []Changelog {
 	}
 
 	return changelog
+}
+
+func changelogTimeFormat(dateString string) (string, error) {
+	layout := time.RFC3339 // Standard layout for the "2006-01-02T03:04:05Z" format
+	t, err := time.Parse(layout, dateString)
+	if err != nil {
+		return "", err
+	}
+
+	newFormat := t.Format("2006-01-02")
+	return newFormat, nil
 }
 
 func getHttpBodyInBytes(url string) ([]byte, error) {
