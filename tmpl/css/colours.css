@@ -1,0 +1,7 @@
+:root {
+  --background-colour: var(--uchu-yang);
+  --text-colour: var(--uchu-yin);
+  --link-colour: var(--uchu-blue);
+  --link-visited-colour: var(--uchu-purple);
+  --link-active-colour: var(--uchu-red);
+}
