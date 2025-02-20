@@ -12,6 +12,8 @@
   </head>
   <body>
 
+    <h1>[Document title should go here]</h1>
+
     {{if .Changelog}}
     <h2 class="changelog-heading">Changelog</h2>
     <div class="changelog">
@@ -32,10 +34,16 @@
     </div>
     {{end}}
 
-    {{if .Revisionlog}}
+    {{if ne .Revisionlog.Message ""}}
+    <h2>Revisionlog</h2>
     <div class="revisionlog">
-      <pre>{{.Revisionlog.Message}}</pre>
-      <pre>{{.Revisionlog.Patch}}</pre>  
+      <h3>Change</h3>
+      <div class="message">
+        <pre>{{.Revisionlog.Message}}</pre>
+      </div>
+      <div>
+        <pre><code class="patch">{{.Revisionlog.Patch}}</code></pre>
+      </div>  
     </div>
     {{end}}
 
