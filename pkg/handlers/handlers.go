@@ -284,8 +284,9 @@ func ghApiAuthedReq(url string) ([]byte, error) {
 	}
 
 	req.Header = http.Header{
-		"Content-Type":  {"application/json"},
-		"Authorization": {global.GH_BEARER_TOKEN},
+		"Content-Type":         {"application/json"},
+		"Authorization":        {"Bearer " + global.GH_BEARER_TOKEN},
+		"X-GitHub-Api-Version": {"2022-11-28"},
 	}
 
 	resp, err := client.Do(req)
