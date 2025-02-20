@@ -11,7 +11,14 @@ import (
 	"github.com/xulinus/repogo/pkg/handlers"
 )
 
-var port = os.Getenv("HTTP_PORT")
+var port string 
+
+func init() {
+ port = os.Getenv("HTTP_PORT")
+ if port == "" {
+   log.Fatal("Error: HTTP_PORT enviorment variable not set. Exiting.")
+ }
+}
 
 func main() {
 	global.BRANCH = "main"
