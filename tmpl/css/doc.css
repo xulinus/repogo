@@ -18,45 +18,6 @@ a:active {
   color: var(--link-active-colour);
 }
 
-.changelog-heading {
- font-weight: 600;
-}
-
-.changelog {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-  width: 825px;
-  line-height: 1.4;
-  margin-top: 1em;
-  margin-bottom: 1em;
-}
-
-.changelog .row {
-  display: flex;
-}
-
-.changelog .header {
-  font-weight: 600;
-  margin-bottom: .5em;
-}
-
-.changelog .date {
-  width: 100px;
-}
-
-.changelog .revision {
-  width: 100px;
-} 
-
-.changelog .whom {
-  width: 225px;
-}
-
-.changelog .change {
-  width: 400px;
-}
-
 /* =================== document styling =================== */
 
 h1 {
@@ -105,3 +66,54 @@ td, th {
 th {
   font-weight: 600;
 }
+
+/* =================== changelog styling =================== */
+
+.changelog-heading {
+ font-weight: 600;
+}
+
+.changelog {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  width: 825px;
+  line-height: 1.4;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.changelog .row {
+  display: flex;
+}
+
+.changelog .header {
+  font-weight: 600;
+  margin-bottom: .5em;
+}
+
+.changelog .date {
+  width: 100px;
+}
+
+.changelog .revision {
+  width: 100px;
+} 
+
+.changelog .whom {
+  width: 225px;
+}
+
+.changelog .change {
+  width: 400px;
+}
+
+/* =================== revisionlog styling =================== */
+
+ .revisionlog .message {
+}
+
+.revisionlog .patch {
+}
+
+
