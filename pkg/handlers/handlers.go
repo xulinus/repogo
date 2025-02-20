@@ -230,7 +230,7 @@ func changelogFromCommits(commits []C) []Changelog {
 		}
 		whom := fmt.Sprintf("%s (%s)", v.Commit.Author.Name, v.Commit.Author.Email)
 		if len(whom) > 25 {
-			whom = whom[:24] + ")"
+			whom = whom[:21] + "...)"
 		}
 		message := strings.Split(v.Commit.Message, "\n\n")[0]
 
