@@ -85,6 +85,12 @@ type Revisionlog struct {
 	Additions, Deletions, Changes, Message, Patch string
 }
 
+type RequestOptions struct {
+	Headers map[string]string
+}
+
+var templates = template.Must(template.ParseFiles("tmpl/doc.html", "tmpl/index.html"))
+
 func Doc(w http.ResponseWriter, r *http.Request) {
 	doc := mux.Vars(r)["doc"]
 	sha := mux.Vars(r)["sha"]
@@ -98,14 +104,16 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 		mdUrl = global.GH_RAW_URL + global.REPO + "refs/heads/" + global.BRANCH + "/" + doc
 		commitsUrl := global.GH_API_REPO_URL + global.REPO + "commits?path=" + doc
 
-		commitsJson, err := ghApiAuthedReq(commitsUrl)
+		jsonRespons, err := getHttpBody(commitsUrl, true)
 		if err != nil {
-			log.Println(err)
+			http.Error(w, "Failed to retrive commits", http.StatusInternalServerError)
+			return
 		}
 
-		commits, err := ghApiJsonToStruct(commitsJson)
+		commits, err := parseJson[[]C](jsonRespons)
 		if err != nil {
-			log.Println(err)
+			http.Error(w, "Failed to parse json", http.StatusInternalServerError)
+			return
 		}
 
 		changelog = changelogFromCommits(commits)
@@ -115,14 +123,17 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 		mdUrl = global.GH_RAW_URL + global.REPO + sha + "/" + doc
 		previousCommitUrl := global.GH_API_REPO_URL + global.REPO + "commits/" + sha
 
-		previousCommitJson, err := ghApiAuthedReq(previousCommitUrl)
+		jsonRespons, err := getHttpBody(previousCommitUrl, false)
 		if err != nil {
-			log.Println(err)
+			http.Error(w, "Failed to retrive commits", http.StatusInternalServerError)
+			return
+
 		}
 
-		revisionData, err := ghApiJsonToStructMap(previousCommitJson)
+		revisionData, err := parseJson[C](jsonRespons)
 		if err != nil {
-			log.Println(err)
+			http.Error(w, "Failed to parse json", http.StatusInternalServerError)
+			return
 		}
 
 		revisionlog = revisionlogFromRevisionData(revisionData, doc)
@@ -130,17 +141,13 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// we always want to print the document itself
-	md, err := getHttpBodyInBytes(mdUrl)
+	md, err := getHttpBody(mdUrl, false)
 	if err != nil {
-		log.Println(err)
+		http.Error(w, "Failed to retrive document", http.StatusInternalServerError)
+		return
 	}
 
-	dom, err := template.ParseFiles("tmpl/doc.html")
-	if err != nil {
-		print(err)
-	}
-
-	err = dom.Execute(w, struct {
+	err = templates.ExecuteTemplate(w, "doc.html", struct {
 		Changelog   []Changelog
 		Revisionlog Revisionlog
 		Document    string
@@ -151,6 +158,10 @@ func Doc(w http.ResponseWriter, r *http.Request) {
 		Document:    string(mdToHTML(md)),
 		Filename:    doc,
 	})
+	if err != nil {
+		http.Error(w, "Failed to generate page", http.StatusInternalServerError)
+		return
+	}
 }
 
 func Main(w http.ResponseWriter, r *http.Request) {
@@ -164,19 +175,21 @@ func Main(w http.ResponseWriter, r *http.Request) {
 	*/
 
 	repository, err := getRepositoryFileList()
-
-	dom, err := template.ParseFiles("tmpl/index.html")
 	if err != nil {
-		log.Println(err)
+		http.Error(w, "Failed to get repository file list", http.StatusInternalServerError)
 	}
 
-	err = dom.Execute(w, struct {
+	err = templates.ExecuteTemplate(w, "index.html", struct {
 		Title      string
 		Repository map[string][]File
 	}{
 		Title:      "Repository",
 		Repository: repository,
 	})
+	if err != nil {
+		http.Error(w, "Failed to generate page", http.StatusInternalServerError)
+		return
+	}
 }
 
 func NonListFileServer(next http.Handler) http.Handler {
@@ -190,31 +203,10 @@ func NonListFileServer(next http.Handler) http.Handler {
 	})
 }
 
-func ghApiJsonToStruct(j []byte) ([]C, error) {
-	var commits []C
-	err := json.Unmarshal(j, &commits)
-	if err != nil {
-		return nil, err
-	}
-	return commits, nil
-}
-
-func ghApiJsonToStructMap(j []byte) (C, error) {
-	var c C
-	err := json.Unmarshal(j, &c)
-	if err != nil {
-		return C{}, err
-	}
-	return c, nil
-}
-
-func ghContentsToFileSlice(j []byte) ([]GHFile, error) {
-	var files []GHFile
-	err := json.Unmarshal(j, &files)
-	if err != nil {
-		return nil, err
-	}
-	return files, nil
+func parseJson[T any](data []byte) (T, error) {
+	var result T
+	err := json.Unmarshal(data, &result)
+	return result, err
 }
 
 func changelogFromCommits(commits []C) []Changelog {
@@ -257,65 +249,42 @@ func changelogTimeFormat(dateString string) (string, error) {
 	return newFormat, nil
 }
 
-func getHttpBodyInBytes(url string) ([]byte, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, err
-	}
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return bodyBytes, nil
-}
-
-func ghApiAuthedReq(url string) ([]byte, error) {
+func getHttpBody(url string, headers bool) ([]byte, error) {
 	client := http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header = http.Header{
-		"Content-Type":         {"application/json"},
-		"Authorization":        {"Bearer " + global.GH_BEARER_TOKEN},
-		"X-GitHub-Api-Version": {"2022-11-28"},
+	if headers {
+		req.Header = http.Header{
+			"Content-Type":         {"application/json"},
+			"Authorization":        {"Bearer " + global.GH_BEARER_TOKEN},
+			"X-GitHub-Api-Version": {"2022-11-28"},
+		}
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, err
+		return nil, fmt.Errorf("getHttpBody(): Unexpected http status code: ", resp.StatusCode)
 	}
 
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return bodyBytes, nil
+	return io.ReadAll(resp.Body)
 }
 
 func getRepositoryFileList() (map[string][]File, error) {
 	url := global.GH_API_REPO_URL + global.REPO + "contents/" + global.FOLDER
-	contentsJson, err := ghApiAuthedReq(url)
+	contentsJson, err := getHttpBody(url, true)
 	if err != nil {
 		log.Println(err)
 	}
 
-	folders, err := ghContentsToFileSlice(contentsJson)
+	folders, err := parseJson[[]GHFile](contentsJson)
 	if err != nil {
 		log.Println(err)
 	}
@@ -344,12 +313,12 @@ func getFolderContent(folderName string) ([]File, error) {
 
 	url := global.GH_API_REPO_URL + global.REPO + "contents/" + global.FOLDER + folderName
 
-	contentsJson, err := ghApiAuthedReq(url)
+	contentsJson, err := getHttpBody(url, true)
 	if err != nil {
 		return nil, err
 	}
 
-	ghFiles, err := ghContentsToFileSlice(contentsJson)
+	ghFiles, err := parseJson[[]GHFile](contentsJson)
 	if err != nil {
 		return nil, err
 	}
