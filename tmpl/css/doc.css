@@ -19,7 +19,7 @@ a:active {
 }
 
 .changelog-heading {
- font-weight: 400;
+ font-weight: 600;
 }
 
 .changelog {
@@ -57,29 +57,51 @@ a:active {
   width: 400px;
 }
 
+/* =================== document styling =================== */
+
 h1 {
   font-size: 1.5em;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 h2 {
   font-size: 1.25em;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 h3 {
   font-size: 1em;
   font-style: italic;
-  font-weight: 800;
+  font-weight: 600;
+}
+
+h1, h2, h3 {
+  margin-top: 1.5em;
+  margin-bottom: .5em;
 }
 
 code {
   display: block;
   background: lightgray;
   font-family: 'Courier New', monospace;
+  padding: .5em;
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
 
 table, td, th {
   border: 1px solid black;
 }
 
+table {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+td, th {
+  padding: .25em;
+}
+
+th {
+  font-weight: 600;
+}
