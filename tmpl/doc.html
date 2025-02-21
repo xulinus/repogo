@@ -41,9 +41,11 @@
       <div class="message">
         <pre>{{.Revisionlog.Message}}</pre>
       </div>
+      {{if ne .Revisionlog.Patch ""}}
       <div>
         <pre><code class="patch">{{.Revisionlog.Patch}}</code></pre>
-      </div>  
+      </div>
+      {{end}}
     </div>
     {{end}}
 
