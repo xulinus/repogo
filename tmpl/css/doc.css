@@ -67,6 +67,10 @@ th {
   font-weight: 600;
 }
 
+pre {
+ white-space: pre-wrap;       /* css-3 */
+}
+
 /* =================== changelog styling =================== */
 
 .changelog-heading {
